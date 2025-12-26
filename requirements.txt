@@ -1,4 +1,4 @@
 streamlit==1.38.0
 sqlalchemy==2.0.32
-openai==1.20.0  # 🔥 PINNED VERSION - Fixes proxies error
+openai==1.20.0
 pyyaml==6.0.2
