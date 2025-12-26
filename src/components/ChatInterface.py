@@ -1,20 +1,20 @@
 import streamlit as st
 from src.utils.openai_client import get_ai_response
 from src.database.models import (
-    get_conversation_messages, 
-    save_message, 
-    create_new_conversation, 
+    get_conversation_messages,
+    save_message,
+    create_new_conversation,
     get_user_conversations
 )
 
 def ChatInterface():
-    # Initialize conversation if first time
+    # Initialize conversation
     if 'current_conv_id' not in st.session_state:
         st.session_state.current_conv_id = create_new_conversation(st.session_state.user_id)
     
     st.header(f"Welcome back, {st.session_state.username} 👋")
     
-    # Sidebar - Conversations
+    # Sidebar
     with st.sidebar:
         st.subheader("💭 Your Conversations")
         convs = get_user_conversations(st.session_state.user_id)
@@ -26,63 +26,35 @@ def ChatInterface():
             if selected == "New Chat":
                 st.session_state.current_conv_id = create_new_conversation(st.session_state.user_id)
             else:
-                # Extract ID from "Chat 1 (2025-12-26 12:00)"
                 conv_id = int(selected.split()[1])
                 st.session_state.current_conv_id = conv_id
         else:
-            st.info("No conversations yet. Start chatting!")
+            st.info("No conversations yet.")
     
     # Chat display
     current_conv_id = st.session_state.current_conv_id
     messages = get_conversation_messages(current_conv_id)
     
-    chat_container = st.container()
-    with chat_container:
-        for msg in messages:
-            if msg['sender'] == 'user':
-                st.markdown(f"""
-                <div style='background: linear-gradient(135deg, #8B9DC3, #667eea); 
-                           color: white; padding: 15px; border-radius: 20px 20px 5px 20px; 
-                           margin: 10px 60px 10px 10px; max-width: 70%;'>
-                    <strong>You:</strong> {msg['content']}
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown(f"""
-                <div style='background: #E0E0E0; color: #333; padding: 15px; 
-                           border-radius: 20px 20px 20px 5px; margin: 10px 10px 10px 60px; 
-                           max-width: 70%;'>
-                    <strong>Sage:</strong> {msg['content']}
-                </div>
-                """, unsafe_allow_html=True)
+    for msg in messages:
+        with st.chat_message(msg['sender']):
+            st.markdown(msg['content'])
     
     # Chat input
     if prompt := st.chat_input("How are you feeling today?..."):
-        # Save user message
         save_message(current_conv_id, "user", prompt)
-        
-        # Display user message
         with st.chat_message("user"):
             st.markdown(prompt)
         
-        # AI response
         with st.chat_message("assistant"):
             with st.spinner("Sage is thinking..."):
-                # Prepare messages for OpenAI
-                openai_messages = [{"role": "user" if m["sender"] == "user" else "assistant", 
-                                  "content": m["content"]} for m in messages]
+                openai_messages = [{"role": msg["sender"], "content": msg["content"]} for msg in messages]
                 openai_messages.append({"role": "user", "content": prompt})
-                
                 response = get_ai_response(openai_messages)
                 st.markdown(response)
-                
-                # Save AI response
                 save_message(current_conv_id, "assistant", response)
-        
         st.rerun()
     
     # Logout
     if st.sidebar.button("🚪 Logout"):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
+        st.session_state.clear()
         st.rerun()
