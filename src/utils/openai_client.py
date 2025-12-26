@@ -1,10 +1,19 @@
 import openai
 import streamlit as st
-from typing import List, Dict
 import os
+from typing import List, Dict
 
-# 🔥 STREAMLIT CLOUD COMPATIBLE - Works with GitHub deploy
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# 🔥 LAZY INITIALIZATION - No crash on import
+_client = None
+
+def get_openai_client():
+    global _client
+    if _client is None:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY not found in Streamlit Cloud secrets")
+        _client = openai.OpenAI(api_key=api_key)
+    return _client
 
 MENTAL_HEALTH_SYSTEM_PROMPT = """
 You are Sage, a compassionate mental health assistant. ALWAYS:
@@ -22,6 +31,7 @@ CRISIS RESOURCES:
 
 def get_ai_response(messages: List[Dict[str, str]]) -> str:
     try:
+        client = get_openai_client()
         context = messages[-10:]  # Last 10 messages
         full_context = [{"role": "system", "content": MENTAL_HEALTH_SYSTEM_PROMPT}] + context
         
@@ -33,5 +43,5 @@ def get_ai_response(messages: List[Dict[str, str]]) -> str:
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        print(f"AI Error: {e}")  # Debug log
-        return "I'm here for you. For urgent help: Call 988 Suicide Lifeline."
+        st.error(f"AI temporarily unavailable: {str(e)}")
+        return "I'm here for you. For urgent help: Call 988 or text HOME to 741741."
