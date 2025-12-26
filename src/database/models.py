@@ -14,7 +14,7 @@ from datetime import datetime
 import sqlite3
 
 # =========================================================
-# DATABASE SETUP (Streamlit Cloud safe)
+# DATABASE CONFIG (STREAMLIT CLOUD SAFE)
 # =========================================================
 
 DATABASE_URL = "sqlite:///mental_health.db"
@@ -25,14 +25,14 @@ engine = create_engine(
     DATABASE_URL,
     echo=False,
     connect_args={"check_same_thread": False},
-    poolclass=NullPool,  # 🔥 Prevents threading issues on Streamlit Cloud
+    poolclass=NullPool,  # 🔥 avoids threading issues
 )
 
 SessionLocal = sessionmaker(bind=engine)
 
 
 # =========================================================
-# SQLITE FOREIGN KEY FIX
+# SQLITE FOREIGN KEY SUPPORT
 # =========================================================
 
 def init_sqlite():
@@ -101,7 +101,7 @@ def init_db():
 
 
 # =========================================================
-# SESSION HELPERS
+# SESSION HELPER
 # =========================================================
 
 def get_session():
@@ -115,37 +115,57 @@ def get_session():
 def get_user_conversations(user_id: int):
     session = get_session()
     try:
-        return (
+        conversations = (
             session.query(Conversation)
             .filter(Conversation.user_id == user_id)
             .order_by(Conversation.created_at.desc())
             .all()
         )
+
+        return [
+            {
+                "id": c.id,
+                "created_at": c.created_at.strftime("%Y-%m-%d %H:%M"),
+            }
+            for c in conversations
+        ]
     finally:
         session.close()
 
 
 def get_conversation_messages(conversation_id: int):
+    if not conversation_id:
+        return []
+
     session = get_session()
     try:
-        return (
+        messages = (
             session.query(Message)
-            .filter(Message.conversation_id == conversation_id)
+            .filter(Message.conversation_id == int(conversation_id))
             .order_by(Message.timestamp)
             .all()
         )
+
+        return [
+            {
+                "sender": m.sender,
+                "content": m.content,
+                "timestamp": m.timestamp,
+            }
+            for m in messages
+        ]
     finally:
         session.close()
 
 
-def create_conversation(user_id: int):
+def create_new_conversation(user_id: int):
     session = get_session()
     try:
         conv = Conversation(user_id=user_id)
         session.add(conv)
         session.commit()
         session.refresh(conv)
-        return conv
+        return conv.id  # 🔥 IMPORTANT: return INT, not ORM
     finally:
         session.close()
 
@@ -154,13 +174,13 @@ def save_message(conversation_id: int, sender: str, content: str):
     session = get_session()
     try:
         msg = Message(
-            conversation_id=conversation_id,
+            conversation_id=int(conversation_id),
             sender=sender,
             content=content,
         )
         session.add(msg)
         session.commit()
         session.refresh(msg)
-        return msg
+        return msg.id
     finally:
         session.close()
