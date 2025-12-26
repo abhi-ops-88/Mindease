@@ -81,3 +81,88 @@ If you are in crisis, please contact your local emergency services or a crisis h
 ### 🖥️ **Local Development**  
 
 #### 1️⃣ Clone Repository  
+git clone https://github.com/your-username/mindease.git
+cd mindease
+
+#### 2️⃣ Create & Activate Virtual Environment  
+python -m venv venv
+source venv/bin/activate # macOS/Linux
+venv\Scripts\activate # Windows
+
+
+#### 3️⃣ Install Dependencies  
+pip install -r requirements.txt
+
+
+`requirements.txt`
+streamlit==1.38.0
+sqlalchemy==2.0.32
+groq==0.9.0
+pyyaml==6.0.2
+
+
+#### 4️⃣ Set Environment Variables  
+macOS / Linux
+export GROQ_API_KEY="your_groq_api_key"
+
+Windows
+setx GROQ_API_KEY "your_groq_api_key"
+
+#### 5️⃣ Run the App  
+streamlit run app.py
+
+Open: **[http://localhost:8501](http://localhost:8501)**  
+
+---
+
+## 📂 Project Structure  
+mindease/
+│
+├── app.py
+├── requirements.txt
+│
+├── src/
+│ ├── components/
+│ │ ├── AuthForm.py
+│ │ ├── ChatInterface.py
+│ │ └── CrisisResourcesBanner.py
+│ │
+│ ├── database/
+│ │ ├── models.py
+│ │ └── init.py
+│ │
+│ └── utils/
+│ ├── auth.py
+│ └── openai_client.py
+
+
+---
+
+## 🧩 Disclaimer  
+MindEase provides **emotional support** and space for reflection.  
+It does **not** replace professional therapy or medical advice.  
+
+If you are in distress or danger, please contact:  
+- 🇺🇸 **988 — Suicide & Crisis Lifeline**  
+- 🌍 Local emergency services  
+
+---
+
+## ❤️ About  
+MindEase was created to help people feel **heard, supported, and less alone**.  
+
+**Upcoming Add-ons:**  
+- 🌊 Streaming responses  
+- 🤝 Multi-model AI fallback  
+- 📓 Journaling mode  
+- 📈 Mood tracking  
+
+---
+
+<div align="center">
+
+[![GitHub stars](https://img.shields.io/github/stars/your-username/mindease?style=social)](https://github.com/your-username/mindease)
+[![GitHub forks](https://img.shields.io/github/forks/your-username/mindease?style=social)](https://github.com/your-username/mindease)
+[![GitHub issues](https://img.shields.io/github/issues/your-username/mindease)](https://github.com/your-username/mindease/issues)
+
+</div>
