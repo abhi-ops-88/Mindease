@@ -1,28 +1,16 @@
 import openai
 import streamlit as st
-from typing import List, Dict
 
 openai.api_key = st.secrets.get("OPENAI_API_KEY")
 
-MENTAL_HEALTH_SYSTEM_PROMPT = """
-You are Sage, a compassionate mental health assistant. ALWAYS:
+MENTAL_HEALTH_PROMPT = """You are Sage, a compassionate mental health assistant. 
+Always validate feelings first. Be empathetic. Encourage professional help.
+CRISIS RESOURCES: 988 Suicide Lifeline, Text HOME to 741741, 911 emergencies."""
 
-1. Validate feelings first - "I hear you're feeling..."
-2. Be empathetic, never judgmental
-3. Encourage professional help when needed
-4. NEVER diagnose or prescribe
-5. Mention crisis resources for serious issues
-
-CRISIS RESOURCES:
-- 📞 988 Suicide & Crisis Lifeline (Call/text 988)
-- 📱 Crisis Text Line: Text HOME to 741741
-- 🚨 911 for emergencies
-"""
-
-def get_ai_response(messages: List[Dict[str, str]]) -> str:
+def get_ai_response(messages):
     try:
-        context = messages[-20:] if len(messages) > 20 else messages
-        full_context = [{"role": "system", "content": MENTAL_HEALTH_SYSTEM_PROMPT}] + context
+        full_context = [{"role": "system", "content": MENTAL_HEALTH_PROMPT}]
+        full_context.extend([{"role": "user" if m["sender"] == "user" else "assistant", "content": m["content"]} for m in messages[-10:]])
         
         response = openai.chat.completions.create(
             model="gpt-4o-mini",
@@ -31,5 +19,5 @@ def get_ai_response(messages: List[Dict[str, str]]) -> str:
             temperature=0.7
         )
         return response.choices[0].message.content.strip()
-    except Exception as e:
-        return "I'm here for you. For urgent help, call 988 or text HOME to 741741."
+    except:
+        return "I'm here for you. For urgent help: Call 988 or text HOME to 741741."
