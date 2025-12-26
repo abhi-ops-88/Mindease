@@ -1,15 +1,11 @@
 import os
 from groq import Groq
 
-# Initialize Groq client
-client = Groq(
-    api_key=os.getenv("GROQ_API_KEY")
-)
-
 SYSTEM_PROMPT = (
     "You are Sage, a calm, empathetic mental health support assistant. "
-    "Listen carefully, respond warmly, and ask gentle follow-up questions. "
-    "Do NOT repeat crisis hotlines unless the user explicitly expresses self-harm or suicidal intent."
+    "Listen carefully and respond warmly. "
+    "Ask gentle follow-up questions. "
+    "Only mention emergency resources if the user clearly expresses self-harm intent."
 )
 
 def get_ai_response(messages):
@@ -21,22 +17,26 @@ def get_ai_response(messages):
     """
 
     try:
-        chat = client.chat.completions.create(
+        # ✅ Create client INSIDE function
+        # ✅ Do NOT pass api_key or proxies
+        client = Groq()
+
+        completion = client.chat.completions.create(
             model="llama3-8b-8192",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 *messages
             ],
             temperature=0.7,
-            max_tokens=500,
+            max_tokens=400,
         )
 
-        return chat.choices[0].message.content.strip()
+        return completion.choices[0].message.content.strip()
 
     except Exception as e:
-        # SAFE fallback (no crashes, no spam)
+        # 🔒 Safe fallback — no crashes, no hotline spam
         return (
-            "I'm here with you. "
-            "It sounds like something has been weighing on you — "
-            "do you want to tell me more about what's been happening?"
+            "I’m here with you. "
+            "It sounds like something has been weighing on you. "
+            "Do you want to tell me more about it?"
         )
