@@ -13,9 +13,9 @@ from sqlalchemy.pool import NullPool
 from datetime import datetime
 import sqlite3
 
-# =========================================================
-# DATABASE SETUP (Streamlit Cloud safe)
-# =========================================================
+# =========================
+# DATABASE SETUP
+# =========================
 
 DATABASE_URL = "sqlite:///mental_health.db"
 
@@ -23,16 +23,17 @@ Base = declarative_base()
 
 engine = create_engine(
     DATABASE_URL,
-    echo=False,
     connect_args={"check_same_thread": False},
-    poolclass=NullPool,  # Prevents Streamlit threading issues
+    poolclass=NullPool,
+    echo=False,
 )
 
 SessionLocal = sessionmaker(bind=engine)
 
-# =========================================================
-# SQLITE FOREIGN KEY FIX
-# =========================================================
+
+# =========================
+# SQLITE FK ENABLE
+# =========================
 
 def init_sqlite():
     conn = sqlite3.connect("mental_health.db")
@@ -40,9 +41,10 @@ def init_sqlite():
     conn.commit()
     conn.close()
 
-# =========================================================
+
+# =========================
 # MODELS
-# =========================================================
+# =========================
 
 class User(Base):
     __tablename__ = "users"
@@ -78,33 +80,46 @@ class Message(Base):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True)
-    conversation_id = Column(
-        Integer, ForeignKey("conversations.id"), nullable=False
-    )
+    conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=False)
     sender = Column(String(10), nullable=False)  # user / assistant
     content = Column(Text, nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow)
 
     conversation = relationship("Conversation", back_populates="messages")
 
-# =========================================================
-# DATABASE INITIALIZATION
-# =========================================================
+
+# =========================
+# INIT DB
+# =========================
 
 def init_db():
     Base.metadata.create_all(engine, checkfirst=True)
     init_sqlite()
 
-# =========================================================
-# SESSION HELPER
-# =========================================================
+
+# =========================
+# SESSION
+# =========================
 
 def get_session():
     return SessionLocal()
 
-# =========================================================
-# CHAT HELPERS (USED BY ChatInterface)
-# =========================================================
+
+# =========================
+# CHAT HELPERS
+# =========================
+
+def create_conversation(user_id: int) -> int:
+    session = get_session()
+    try:
+        conv = Conversation(user_id=user_id)
+        session.add(conv)
+        session.commit()
+        session.refresh(conv)
+        return conv.id
+    finally:
+        session.close()
+
 
 def get_user_conversations(user_id: int):
     session = get_session()
@@ -122,24 +137,20 @@ def get_user_conversations(user_id: int):
 def get_conversation_messages(conversation_id: int):
     session = get_session()
     try:
-        return (
+        messages = (
             session.query(Message)
             .filter(Message.conversation_id == conversation_id)
             .order_by(Message.timestamp)
             .all()
         )
-    finally:
-        session.close()
-
-
-def create_conversation(user_id: int):
-    session = get_session()
-    try:
-        conv = Conversation(user_id=user_id)
-        session.add(conv)
-        session.commit()
-        session.refresh(conv)
-        return conv.id
+        return [
+            {
+                "sender": m.sender,
+                "content": m.content,
+                "timestamp": m.timestamp,
+            }
+            for m in messages
+        ]
     finally:
         session.close()
 
@@ -154,7 +165,5 @@ def save_message(conversation_id: int, sender: str, content: str):
         )
         session.add(msg)
         session.commit()
-        session.refresh(msg)
-        return msg
     finally:
         session.close()
