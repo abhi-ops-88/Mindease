@@ -1,9 +1,8 @@
 from openai import OpenAI
-import os
 
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")
-)
+# The OpenAI client automatically reads OPENAI_API_KEY
+# from the environment (Streamlit secrets)
+client = OpenAI()
 
 def get_ai_response(messages):
     try:
@@ -16,8 +15,7 @@ def get_ai_response(messages):
 
     except Exception as e:
         return (
-            "I'm really sorry you're having a hard day. "
-            "I'm here with you, even if things feel heavy right now.\n\n"
-            "If you're feeling overwhelmed or unsafe, please consider calling "
-            "**988** (US Suicide & Crisis Lifeline). 💙"
+            "I'm really sorry you're having a hard day. 💙\n\n"
+            "I'm here with you. If things feel overwhelming or unsafe, "
+            "please consider calling **988** (US Suicide & Crisis Lifeline)."
         )
