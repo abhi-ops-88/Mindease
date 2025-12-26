@@ -1,4 +1,5 @@
 import hashlib
+from sqlalchemy.exc import IntegrityError
 from src.database.models import get_session, User
 
 def hash_password(password: str) -> str:
@@ -7,6 +8,7 @@ def hash_password(password: str) -> str:
 def create_user(email: str, username: str, password: str):
     session = get_session()
     try:
+        # Check existing users first
         if session.query(User).filter(User.email == email).first():
             return False, "Email already exists"
         if session.query(User).filter(User.username == username).first():
@@ -18,6 +20,9 @@ def create_user(email: str, username: str, password: str):
         session.commit()
         session.refresh(user)
         return True, user
+    except IntegrityError:
+        session.rollback()
+        return False, "User already exists"
     finally:
         session.close()
 
