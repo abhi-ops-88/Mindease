@@ -1,7 +1,6 @@
 import streamlit as st
 import sys
 import os
-
 sys.path.insert(0, os.path.abspath("src"))
 
 from components.AuthForm import AuthForm
@@ -33,3 +32,9 @@ else:
     CrisisResourcesBanner()
     st.divider()
     ChatInterface()
+    # Logout button in sidebar
+if st.sidebar.button("🚪 Logout"):
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.rerun()
+
