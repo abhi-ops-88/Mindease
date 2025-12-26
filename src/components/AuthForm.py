@@ -1,42 +1,33 @@
 import streamlit as st
-from src.utils.auth import register_user, login_user
+from src.utils.auth import create_user, authenticate_user
 
 def AuthForm():
     st.title("🧠 Mental Health Assistant")
-    st.markdown("### Welcome! Please login or create an account")
     
     tab1, tab2 = st.tabs(["🔑 Login", "➕ Sign Up"])
     
     with tab1:
-        col1, col2 = st.columns([3,1])
-        with col1:
-            email = st.text_input("Email", key="login_email", placeholder="you@example.com")
-        with col2:
-            password = st.text_input("Password", type="password", key="login_password")
+        email = st.text_input("Email", key="login_email")
+        password = st.text_input("Password", type="password", key="login_password")
         
-        if st.button("Login", type="primary"):
-            success, username = login_user(email, password)
+        if st.button("Login"):
+            success, result = authenticate_user(email, password)
             if success:
                 st.session_state.authenticated = True
-                st.session_state.user_email = email
-                st.session_state.username = username
-                st.session_state.user_id = email  # Use email as ID
-                st.success(f"Welcome back, {username}! 👋")
+                st.session_state.user_id = result.id
+                st.session_state.username = result.username
                 st.rerun()
             else:
-                st.error("❌ Invalid email or password")
+                st.error("Invalid credentials")
     
     with tab2:
-        col1, col2 = st.columns([1,3])
-        with col1:
-            new_email = st.text_input("Email", key="signup_email")
-        with col2:
-            username = st.text_input("Username", key="signup_username")
-            new_password = st.text_input("Password", type="password", key="signup_password")
+        new_email = st.text_input("Email", key="signup_email")
+        username = st.text_input("Username", key="signup_username")
+        new_password = st.text_input("Password", type="password", key="signup_password")
         
-        if st.button("Create Account"):
-            success, message = register_user(new_email, username, new_password)
+        if st.button("Sign Up"):
+            success, message = create_user(new_email, username, new_password)
             if success:
-                st.success("✅ Account created! Please login above.")
+                st.success("Account created!")
             else:
-                st.error(f"❌ {message}")
+                st.error(message)
