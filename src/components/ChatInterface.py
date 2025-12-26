@@ -1,9 +1,16 @@
 import streamlit as st
 from src.utils.openai_client import get_ai_response
-from src.database.models import (
+# from src.database.models import (
+#     get_conversation_messages,
+#     save_message,
+#     create_conversation,
+#     get_user_conversations
+# )
+
+from src.database import (
     get_conversation_messages,
     save_message,
-    create_conversation,
+    create_new_conversation,
     get_user_conversations
 )
 
