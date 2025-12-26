@@ -1,4 +1,11 @@
 import streamlit as st
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath("src"))
+
+from components.AuthForm import AuthForm
+
 from src.components.AuthForm import AuthForm
 from src.components.CrisisResourcesBanner import CrisisResourcesBanner
 from src.components.ChatInterface import ChatInterface
