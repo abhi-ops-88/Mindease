@@ -4,20 +4,20 @@ from src.database.models import (get_conversation_messages, save_message,
                                 create_new_conversation, get_user_conversations)
 
 def ChatInterface():
-    # Initialize conversation if needed
+    # Initialize conversation
     if 'current_conv_id' not in st.session_state:
         st.session_state.current_conv_id = create_new_conversation(st.session_state.user_id)
     
     st.header(f"Welcome back, {st.session_state.username} 👋")
     
-    # Sidebar - Conversations
+    # Sidebar conversations
     with st.sidebar:
         st.subheader("💭 Your Conversations")
         convs = get_user_conversations(st.session_state.user_id)
         
         if convs:
             conv_names = [f"Chat {c['id']} ({c['created_at']})" for c in convs]
-            selected = st.selectbox("Select chat:", ["New Chat"] + conv_names, key="conv_select")
+            selected = st.selectbox("Select chat:", ["New Chat"] + conv_names)
             
             if selected == "New Chat":
                 st.session_state.current_conv_id = create_new_conversation(st.session_state.user_id)
@@ -53,25 +53,14 @@ def ChatInterface():
     
     # Chat input
     if prompt := st.chat_input("How are you feeling today?..."):
-        # Save & display user message
         save_message(current_conv_id, "user", prompt)
         st.chat_message("user").markdown(prompt)
         
-        # AI response
         with st.chat_message("assistant"):
             with st.spinner("Sage is thinking..."):
-                # Convert messages for OpenAI
                 openai_messages = [{"role": "user" if m["sender"] == "user" else "assistant", 
                                   "content": m["content"]} for m in messages + [{"sender": "user", "content": prompt}]]
-                
                 response = get_ai_response(openai_messages)
                 st.markdown(response)
                 save_message(current_conv_id, "assistant", response)
-        
-        st.rerun()
-    
-    # Logout button
-    if st.sidebar.button("🚪 Logout"):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
         st.rerun()
