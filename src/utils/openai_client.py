@@ -4,7 +4,7 @@ import httpx
 from groq import Groq
 
 # -------------------------------------------------
-# 🔥 HARD FIX: Custom HTTP client (no proxies)
+# 🔥 Disable proxies (Streamlit Cloud fix)
 # -------------------------------------------------
 http_client = httpx.Client(
     proxies=None,
@@ -24,11 +24,11 @@ def get_ai_response(messages):
     try:
         client = Groq(
             api_key=os.getenv("GROQ_API_KEY"),
-            http_client=http_client,  # 🔥 THIS is the key
+            http_client=http_client,
         )
 
         completion = client.chat.completions.create(
-            model="llama3-8b-8192",
+            model="llama-3.1-8b-instant",  # ✅ FIXED MODEL
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 *messages,
