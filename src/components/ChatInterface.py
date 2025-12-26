@@ -22,7 +22,7 @@ def ChatInterface():
         convs = get_user_conversations(st.session_state.user_id)
 
         if convs:
-            conv_names = [f"Chat {c['id']} ({c['created_at']})" for c in convs]
+            conv_names = [f"Chat {c.id} ({c.created_at})" for c in convs]
             selected = st.selectbox("Select chat:", ["New Chat"] + conv_names)
 
             if selected == "New Chat":
