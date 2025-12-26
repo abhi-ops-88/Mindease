@@ -1,5 +1,5 @@
-streamlit
-streamlit-authenticator
-sqlalchemy
-openai
-pyyaml
+streamlit==1.38.0
+streamlit-authenticator==0.3.2
+sqlalchemy==2.0.32
+openai==1.51.2
+pyyaml==6.0.2
