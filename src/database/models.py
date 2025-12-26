@@ -2,6 +2,14 @@ from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, F
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
+import sqlite3
+
+# 🔥 FIX: Enable SQLite foreign keys
+def init_sqlite():
+    conn = sqlite3.connect('mental_health.db')
+    conn.execute('PRAGMA foreign_keys = ON')
+    conn.commit()
+    conn.close()
 
 Base = declarative_base()
 engine = create_engine('sqlite:///mental_health.db', echo=False)
@@ -34,6 +42,7 @@ class Message(Base):
 
 def init_db():
     Base.metadata.create_all(engine, checkfirst=True)
+    init_sqlite()  # 🔥 FIX: Enable foreign keys
 
 def get_session():
     return SessionLocal()
