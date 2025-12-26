@@ -1,7 +1,10 @@
+import os
 from openai import OpenAI
 
-# The OpenAI client automatically reads OPENAI_API_KEY
-# from the environment (Streamlit secrets)
+# 🔥 STREAMLIT CLOUD FIX — REMOVE PROXIES
+for key in ["HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"]:
+    os.environ.pop(key, None)
+
 client = OpenAI()
 
 def get_ai_response(messages):
@@ -13,7 +16,7 @@ def get_ai_response(messages):
         )
         return response.choices[0].message.content
 
-    except Exception as e:
+    except Exception:
         return (
             "I'm really sorry you're having a hard day. 💙\n\n"
             "I'm here with you. If things feel overwhelming or unsafe, "
