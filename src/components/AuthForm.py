@@ -1,6 +1,6 @@
 import streamlit as st
 from src.utils.auth import create_user, authenticate_user
-from src.database.models import User  # ✅ FIXED: Removed get_db_session
+from src.database.models import User
 
 def AuthForm():
     st.title("🧠 Mental Health Assistant")
