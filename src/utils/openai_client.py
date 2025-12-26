@@ -1,28 +1,42 @@
 import os
-import openai
+from groq import Groq
 
-# Load API key from environment (Streamlit Cloud compatible)
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Initialize Groq client
+client = Groq(
+    api_key=os.getenv("GROQ_API_KEY")
+)
 
 SYSTEM_PROMPT = (
     "You are Sage, a calm, empathetic mental health support assistant. "
-    "You listen carefully, respond with compassion, and never diagnose. "
-    "Offer grounding advice gently and ask thoughtful follow-up questions."
+    "Listen carefully, respond warmly, and ask gentle follow-up questions. "
+    "Do NOT repeat crisis hotlines unless the user explicitly expresses self-harm or suicidal intent."
 )
 
 def get_ai_response(messages):
+    """
+    messages = [
+        {"role": "user", "content": "..."},
+        {"role": "assistant", "content": "..."}
+    ]
+    """
+
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+        chat = client.chat.completions.create(
+            model="llama3-8b-8192",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 *messages
             ],
             temperature=0.7,
+            max_tokens=500,
         )
 
-        return response.choices[0].message["content"]
+        return chat.choices[0].message.content.strip()
 
     except Exception as e:
-        # Show real error instead of masking it
-        return f"AI unavailable: {str(e)}"
+        # SAFE fallback (no crashes, no spam)
+        return (
+            "I'm here with you. "
+            "It sounds like something has been weighing on you — "
+            "do you want to tell me more about what's been happening?"
+        )
