@@ -4,20 +4,21 @@ import os
 sys.path.insert(0, os.path.abspath("src"))
 
 # Safe database reset for Streamlit Cloud
+import shutil
 if os.path.exists('mental_health.db'):
-    os.remove('mental_health.db')
+    shutil.rmtree('mental_health.db', ignore_errors=True)
+    os.remove('mental_health.db') if os.path.exists('mental_health.db') else None
 
 from src.components.AuthForm import AuthForm
 from src.components.CrisisResourcesBanner import CrisisResourcesBanner
 from src.components.ChatInterface import ChatInterface
 from src.database.models import init_db
 
-# Initialize database (safe now)
+# Initialize database
 init_db()
 
 st.set_page_config(page_title="Mental Health Assistant", layout="wide", page_icon="🧠")
 
-# Gradient background
 st.markdown("""
 <style>
 .main {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);}
@@ -36,7 +37,6 @@ else:
     st.divider()
     ChatInterface()
     
-    # Sidebar logout
     with st.sidebar:
         if st.button("🚪 Logout"):
             for key in list(st.session_state.keys()):
