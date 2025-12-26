@@ -1,4 +1,3 @@
-import sqlite3
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
@@ -36,19 +35,49 @@ class Message(Base):
 def init_db():
     Base.metadata.create_all(engine)
 
-def get_db_session():
-    db = SessionLocal()
+def get_session():
+    return SessionLocal()
+
+# 🔥 THESE 4 FUNCTIONS WERE MISSING 🔥
+def get_conversation_messages(conv_id):
+    session = get_session()
     try:
-        yield db
+        messages = (session.query(Message)
+                   .filter(Message.conversation_id == conv_id)
+                   .order_by(Message.timestamp)
+                   .all())
+        return [{"sender": m.sender, "content": m.content} for m in messages]
     finally:
-        db.close()
+        session.close()
+
+def save_message(conv_id, sender, content):
+    session = get_session()
+    try:
+        message = Message(conversation_id=conv_id, sender=sender, content=content)
+        session.add(message)
+        session.commit()
+    finally:
+        session.close()
+
+def create_new_conversation(user_id):
+    session = get_session()
+    try:
+        conv = Conversation(user_id=user_id)
+        session.add(conv)
+        session.commit()
+        session.refresh(conv)
+        return conv.id
+    finally:
+        session.close()
 
 def get_user_conversations(user_id):
-    from sqlalchemy.orm import Session
-    db = SessionLocal()
+    session = get_session()
     try:
-        convs = db.query(Conversation).filter(Conversation.user_id == user_id)\
-            .order_by(Conversation.created_at.desc()).limit(10).all()
+        convs = (session.query(Conversation)
+                .filter(Conversation.user_id == user_id)
+                .order_by(Conversation.created_at.desc())
+                .limit(10)
+                .all())
         return [{"id": c.id, "created_at": c.created_at.strftime("%Y-%m-%d %H:%M")} for c in convs]
     finally:
-        db.close()
+        session.close()
