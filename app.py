@@ -8,7 +8,7 @@ st.set_page_config(page_title="Mental Health Assistant", layout="wide", page_ico
 from src.components.AuthForm import AuthForm
 from src.components.CrisisResourcesBanner import CrisisResourcesBanner
 from src.components.ChatInterface import ChatInterface
-from src.utils.database import init_db
+from src.database.models import init_db
 
 init_db()
 
