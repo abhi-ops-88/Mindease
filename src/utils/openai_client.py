@@ -1,21 +1,16 @@
 import os
 import streamlit as st
+import httpx
 from groq import Groq
 
 # -------------------------------------------------
-# 🔥 FIX: Disable proxy variables (Streamlit Cloud)
+# 🔥 HARD FIX: Custom HTTP client (no proxies)
 # -------------------------------------------------
-for key in [
-    "HTTP_PROXY",
-    "HTTPS_PROXY",
-    "http_proxy",
-    "https_proxy",
-]:
-    os.environ.pop(key, None)
+http_client = httpx.Client(
+    proxies=None,
+    timeout=30.0,
+)
 
-# -------------------------------------------------
-# System prompt
-# -------------------------------------------------
 SYSTEM_PROMPT = """
 You are Sage, a calm, empathetic mental health assistant.
 Speak naturally and warmly.
@@ -25,21 +20,21 @@ Do not give medical diagnoses.
 Encourage professional help when appropriate.
 """
 
-# -------------------------------------------------
-# AI Response
-# -------------------------------------------------
 def get_ai_response(messages):
     try:
-        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        client = Groq(
+            api_key=os.getenv("GROQ_API_KEY"),
+            http_client=http_client,  # 🔥 THIS is the key
+        )
 
         completion = client.chat.completions.create(
             model="llama3-8b-8192",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                *messages
+                *messages,
             ],
-            temperature=0.8,
-            max_tokens=300,
+            temperature=0.85,
+            max_tokens=350,
         )
 
         return completion.choices[0].message.content.strip()
@@ -48,5 +43,5 @@ def get_ai_response(messages):
         st.error(f"AI Error: {e}")
         return (
             "I’m really glad you shared that with me. "
-            "Do you want to tell me a bit more about what today has been like for you?"
+            "What part of today has felt the heaviest so far?"
         )
