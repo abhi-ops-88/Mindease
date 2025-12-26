@@ -3,6 +3,15 @@ from src.utils.openai_client import get_ai_response
 from src.database.models import get_conversation_messages, save_message, create_new_conversation
 
 def ChatInterface():
+    if 'current_conv_id' not in st.session_state:
+        st.session_state.current_conv_id = create_new_conversation(st.session_state.user_id)
+    
+    # Load messages
+    messages = get_conversation_messages(st.session_state.current_conv_id)
+    # ... rest of your code
+
+
+def ChatInterface():
     st.header(f"Welcome back, {st.session_state.username} 👋")
     
     # Sidebar conversations
