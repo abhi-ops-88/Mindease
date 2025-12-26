@@ -1,23 +1,37 @@
 import openai
 import streamlit as st
+from typing import List, Dict
+import os
 
-openai.api_key = st.secrets.get("OPENAI_API_KEY")
+# 🔥 STREAMLIT CLOUD COMPATIBLE - Works with GitHub deploy
+client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-MENTAL_HEALTH_PROMPT = """You are Sage, a compassionate mental health assistant. 
-Always validate feelings first. Be empathetic. Encourage professional help.
-CRISIS RESOURCES: 988 Suicide Lifeline, Text HOME to 741741, 911 emergencies."""
+MENTAL_HEALTH_SYSTEM_PROMPT = """
+You are Sage, a compassionate mental health assistant. ALWAYS:
+1. Validate feelings first - "I hear you're feeling..."
+2. Be empathetic, never judgmental
+3. Encourage professional help when needed
+4. NEVER diagnose or prescribe
+5. Mention crisis resources for serious issues
 
-def get_ai_response(messages):
+CRISIS RESOURCES:
+- 📞 988 Suicide & Crisis Lifeline (Call/text 988)
+- 📱 Crisis Text Line: Text HOME to 741741
+- 🚨 911 for emergencies
+"""
+
+def get_ai_response(messages: List[Dict[str, str]]) -> str:
     try:
-        full_context = [{"role": "system", "content": MENTAL_HEALTH_PROMPT}]
-        full_context.extend([{"role": "user" if m["sender"] == "user" else "assistant", "content": m["content"]} for m in messages[-10:]])
+        context = messages[-10:]  # Last 10 messages
+        full_context = [{"role": "system", "content": MENTAL_HEALTH_SYSTEM_PROMPT}] + context
         
-        response = openai.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=full_context,
             max_tokens=500,
             temperature=0.7
         )
         return response.choices[0].message.content.strip()
-    except:
-        return "I'm here for you. For urgent help: Call 988 or text HOME to 741741."
+    except Exception as e:
+        print(f"AI Error: {e}")  # Debug log
+        return "I'm here for you. For urgent help: Call 988 Suicide Lifeline."
