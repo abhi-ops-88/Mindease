@@ -3,57 +3,50 @@ import streamlit as st
 from groq import Groq
 
 # -------------------------------------------------
-# System prompt (controls personality + behavior)
+# 🔥 FIX: Disable proxy variables (Streamlit Cloud)
 # -------------------------------------------------
+for key in [
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "http_proxy",
+    "https_proxy",
+]:
+    os.environ.pop(key, None)
 
+# -------------------------------------------------
+# System prompt
+# -------------------------------------------------
 SYSTEM_PROMPT = """
-You are Sage, a kind, calm, empathetic mental health assistant.
-- Respond naturally and conversationally
-- Ask thoughtful follow-up questions
-- Never repeat the same response
-- Do NOT give medical diagnoses
-- Encourage seeking professional help when appropriate
+You are Sage, a calm, empathetic mental health assistant.
+Speak naturally and warmly.
+Ask thoughtful follow-up questions.
+Never repeat the same sentence.
+Do not give medical diagnoses.
+Encourage professional help when appropriate.
 """
 
 # -------------------------------------------------
-# AI response function
+# AI Response
 # -------------------------------------------------
-
 def get_ai_response(messages):
-    """
-    messages: list of dicts
-    Example:
-    [
-        {"role": "user", "content": "I feel anxious"},
-        {"role": "assistant", "content": "Tell me more"},
-    ]
-    """
-
     try:
-        # Initialize Groq client
-        client = Groq(
-            api_key=os.getenv("GROQ_API_KEY")
-        )
+        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-        # Create completion
         completion = client.chat.completions.create(
             model="llama3-8b-8192",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 *messages
             ],
-            temperature=0.7,
+            temperature=0.8,
             max_tokens=300,
         )
 
         return completion.choices[0].message.content.strip()
 
     except Exception as e:
-        # 🔥 IMPORTANT: show real error so debugging is easy
         st.error(f"AI Error: {e}")
-
-        # Safe fallback response (non-repetitive)
         return (
-            "I’m really glad you reached out. "
-            "Would you like to tell me what’s been weighing on you today?"
+            "I’m really glad you shared that with me. "
+            "Do you want to tell me a bit more about what today has been like for you?"
         )
