@@ -12,7 +12,8 @@ def init_sqlite():
     conn.close()
 
 Base = declarative_base()
-engine = create_engine('sqlite:///mental_health.db', echo=False)
+# 🔥 CRITICAL FIX FOR STREAMLIT CLOUD
+engine = create_engine('sqlite:///mental_health.db', echo=False, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine)
 
 class User(Base):
