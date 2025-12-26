@@ -1,29 +1,18 @@
 import streamlit as st
 from src.utils.openai_client import get_ai_response
-# from src.database.models import (
-#     get_conversation_messages,
-#     save_message,
-#     create_conversation,
-#     get_user_conversations
-# )
-
-from src.database import (
+from src.database.models import (
     get_conversation_messages,
     save_message,
-    create_new_conversation,
+    create_conversation,
     get_user_conversations
 )
 
+
 def ChatInterface():
     # Initialize conversation
-    if 'current_conv_id' not in st.session_state:
-        # st.session_state.current_conv_id = create_conversation(
-        #     st.session_state.user_id
-        st.session_state.current_conv_id = create_new_conversation(
-    st.session_state.user_id
-)
-
-        )
+    if "current_conv_id" not in st.session_state:
+        conv = create_conversation(st.session_state.user_id)
+        st.session_state.current_conv_id = conv.id
 
     st.header(f"Welcome back, {st.session_state.username} 👋")
 
@@ -37,9 +26,8 @@ def ChatInterface():
             selected = st.selectbox("Select chat:", ["New Chat"] + conv_names)
 
             if selected == "New Chat":
-                st.session_state.current_conv_id = create_conversation(
-                    st.session_state.user_id
-                )
+                conv = create_conversation(st.session_state.user_id)
+                st.session_state.current_conv_id = conv.id
             else:
                 conv_id = int(selected.split()[1])
                 st.session_state.current_conv_id = conv_id
@@ -51,11 +39,12 @@ def ChatInterface():
     messages = get_conversation_messages(current_conv_id)
 
     for msg in messages:
-        with st.chat_message(msg["sender"]):
-            st.markdown(msg["content"])
+        with st.chat_message(msg.sender):
+            st.markdown(msg.content)
 
-    # Chat input
-    if prompt := st.chat_input("How are you feeling today?..."):
+    # Chat input (SAFE SYNTAX)
+    prompt = st.chat_input("How are you feeling today?...")
+    if prompt:
         save_message(current_conv_id, "user", prompt)
 
         with st.chat_message("user"):
@@ -64,8 +53,8 @@ def ChatInterface():
         with st.chat_message("assistant"):
             with st.spinner("Sage is thinking..."):
                 openai_messages = [
-                    {"role": msg["sender"], "content": msg["content"]}
-                    for msg in messages
+                    {"role": m.sender, "content": m.content}
+                    for m in messages
                 ]
                 openai_messages.append(
                     {"role": "user", "content": prompt}
