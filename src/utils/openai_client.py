@@ -1,24 +1,20 @@
 import os
-from openai import OpenAI
+import openai
 
-# 🔥 STREAMLIT CLOUD FIX — REMOVE PROXIES
-for key in ["HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"]:
-    os.environ.pop(key, None)
-
-client = OpenAI()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def get_ai_response(messages):
     try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
             messages=messages,
             temperature=0.7,
         )
-        return response.choices[0].message.content
+        return response["choices"][0]["message"]["content"]
 
     except Exception:
         return (
-            "I'm really sorry you're having a hard day. 💙\n\n"
-            "I'm here with you. If things feel overwhelming or unsafe, "
-            "please consider calling **988** (US Suicide & Crisis Lifeline)."
+            "I'm really sorry you're having a tough moment 💙\n\n"
+            "If you feel unsafe, please call **988** (US Suicide & Crisis Lifeline). "
+            "You’re not alone."
         )
