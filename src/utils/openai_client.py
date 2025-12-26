@@ -3,45 +3,51 @@ import streamlit as st
 import os
 from typing import List, Dict
 
-# 🔥 LAZY INITIALIZATION - No crash on import
+# 🔥 DEBUG VERSION - Shows exactly what's happening
+def debug_api_key():
+    api_key = os.getenv("OPENAI_API_KEY")
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 🔍 DEBUG INFO")
+    st.sidebar.markdown(f"**API Key loaded:** {'✅ YES' if api_key else '❌ NO'}")
+    st.sidebar.markdown(f"**Key length:** {len(api_key) if api_key else 0}")
+    if api_key:
+        st.sidebar.success("✅ Key format correct!")
+    else:
+        st.sidebar.error("❌ Fix Streamlit Cloud Secrets!")
+    return api_key
+
 _client = None
 
 def get_openai_client():
     global _client
     if _client is None:
-        api_key = os.getenv("OPENAI_API_KEY")
+        api_key = debug_api_key()  # 🔥 Shows debug info
         if not api_key:
-            raise ValueError("OPENAI_API_KEY not found in Streamlit Cloud secrets")
+            raise ValueError("OPENAI_API_KEY missing from Streamlit Cloud secrets")
         _client = openai.OpenAI(api_key=api_key)
     return _client
 
 MENTAL_HEALTH_SYSTEM_PROMPT = """
 You are Sage, a compassionate mental health assistant. ALWAYS:
-1. Validate feelings first - "I hear you're feeling..."
-2. Be empathetic, never judgmental
-3. Encourage professional help when needed
-4. NEVER diagnose or prescribe
-5. Mention crisis resources for serious issues
-
-CRISIS RESOURCES:
-- 📞 988 Suicide & Crisis Lifeline (Call/text 988)
-- 📱 Crisis Text Line: Text HOME to 741741
-- 🚨 911 for emergencies
+1. Validate feelings first
+2. Be empathetic
+3. Mention crisis resources when needed
+CRISIS: 988 Lifeline, Text HOME to 741741, 911 emergencies.
 """
 
 def get_ai_response(messages: List[Dict[str, str]]) -> str:
     try:
         client = get_openai_client()
-        context = messages[-10:]  # Last 10 messages
+        context = messages[-10:]
         full_context = [{"role": "system", "content": MENTAL_HEALTH_SYSTEM_PROMPT}] + context
         
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o-mini",  # ✅ Your key has access
             messages=full_context,
             max_tokens=500,
             temperature=0.7
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        st.error(f"AI temporarily unavailable: {str(e)}")
-        return "I'm here for you. For urgent help: Call 988 or text HOME to 741741."
+        st.error(f"AI Error details: {str(e)}")
+        return "AI temporarily unavailable. Call 988 for immediate help."
