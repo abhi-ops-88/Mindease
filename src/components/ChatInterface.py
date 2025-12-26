@@ -10,25 +10,19 @@ from src.database.models import (
 
 def ChatInterface():
 
-    # -----------------------------
-    # SAFETY CHECK
-    # -----------------------------
     if "user_id" not in st.session_state:
-        st.error("User not authenticated.")
+        st.error("Not authenticated")
         return
 
-    # -----------------------------
-    # INITIALIZE CONVERSATION ONCE
-    # -----------------------------
+    # Initialize conversation (ID only)
     if "current_conv_id" not in st.session_state:
-        conv = create_conversation(st.session_state.user_id)
-        st.session_state.current_conv_id = conv.id
+        st.session_state.current_conv_id = create_conversation(
+            st.session_state.user_id
+        )
 
     st.header(f"Welcome back, {st.session_state.username} 👋")
 
-    # -----------------------------
-    # SIDEBAR – CONVERSATIONS
-    # -----------------------------
+    # Sidebar
     with st.sidebar:
         st.subheader("💭 Your Conversations")
 
@@ -40,48 +34,39 @@ def ChatInterface():
                 for c in conversations
             ]
 
-            selected = st.selectbox(
-                "Select a chat",
+            choice = st.selectbox(
+                "Select chat",
                 ["New Chat"] + labels,
-                key="chat_selector",
             )
 
-            if selected == "New Chat":
-                conv = create_conversation(st.session_state.user_id)
-                st.session_state.current_conv_id = conv.id
+            if choice == "New Chat":
+                st.session_state.current_conv_id = create_conversation(
+                    st.session_state.user_id
+                )
             else:
-                st.session_state.current_conv_id = int(selected.split()[1])
+                st.session_state.current_conv_id = int(choice.split()[1])
 
         else:
             st.info("No conversations yet.")
 
-    # -----------------------------
-    # LOAD MESSAGES
-    # -----------------------------
+    # Load messages
     conv_id = st.session_state.current_conv_id
     messages = get_conversation_messages(conv_id)
 
-    # -----------------------------
-    # DISPLAY CHAT
-    # -----------------------------
     for msg in messages:
         with st.chat_message(msg.sender):
             st.markdown(msg.content)
 
-    # -----------------------------
-    # CHAT INPUT
-    # -----------------------------
     prompt = st.chat_input("How are you feeling today?")
 
     if prompt:
-        # Save user message
         save_message(conv_id, "user", prompt)
 
         with st.chat_message("user"):
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Sage is thinking..."):
+            with st.spinner("Thinking..."):
                 history = [
                     {"role": m.sender, "content": m.content}
                     for m in messages
@@ -90,5 +75,4 @@ def ChatInterface():
 
                 response = get_ai_response(history)
                 st.markdown(response)
-
                 save_message(conv_id, "assistant", response)
