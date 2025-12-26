@@ -17,8 +17,12 @@ from src.database import (
 def ChatInterface():
     # Initialize conversation
     if 'current_conv_id' not in st.session_state:
-        st.session_state.current_conv_id = create_conversation(
-            st.session_state.user_id
+        # st.session_state.current_conv_id = create_conversation(
+        #     st.session_state.user_id
+        st.session_state.current_conv_id = create_new_conversation(
+    st.session_state.user_id
+)
+
         )
 
     st.header(f"Welcome back, {st.session_state.username} 👋")
