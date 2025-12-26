@@ -1,39 +1,88 @@
 import streamlit as st
 from src.utils.openai_client import get_ai_response
-from src.database.models import (get_conversation_messages, save_message, 
-                                create_new_conversation, get_user_conversations)
-import os
+from src.database.models import (
+    get_conversation_messages, 
+    save_message, 
+    create_new_conversation, 
+    get_user_conversations
+)
 
 def ChatInterface():
-    # 🔥 PERMANENT DEBUG DASHBOARD (TOP - NEVER DISAPPEARS)
-    debug_col1, debug_col2 = st.columns([1,3])
-    with debug_col1:
-        st.markdown("### 🔍 **DEBUG**")
-        
-        # API Key check
-        api_key = os.getenv("OPENAI_API_KEY")
-        if api_key:
-            st.success(f"✅ **Key OK** ({len(api_key)} chars)")
-        else:
-            st.error("❌ **NO API KEY** - Fix Streamlit Secrets!")
-        
-        # Test button (STAYS VISIBLE)
-        if st.button("🧪 **TEST AI NOW**", use_container_width=True):
-            try:
-                test_response = get_ai_response([{"sender": "user", "content": "test connection"}])
-                st.success("🎉 **AI WORKS PERFECTLY!**")
-                st.info(f"**Response preview:** {test_response[:100]}...")
-            except Exception as e:
-                st.error(f"❌ **AI FAILED:** {str(e)}")
-                st.info("**Fix:** Check secrets / credits / rate limits")
+    # Initialize conversation if first time
+    if 'current_conv_id' not in st.session_state:
+        st.session_state.current_conv_id = create_new_conversation(st.session_state.user_id)
     
     st.header(f"Welcome back, {st.session_state.username} 👋")
     
-    # Sidebar conversations (unchanged)
+    # Sidebar - Conversations
     with st.sidebar:
         st.subheader("💭 Your Conversations")
         convs = get_user_conversations(st.session_state.user_id)
         
         if convs:
             conv_names = [f"Chat {c['id']} ({c['created_at']})" for c in convs]
-            selected
+            selected = st.selectbox("Select chat:", ["New Chat"] + conv_names)
+            
+            if selected == "New Chat":
+                st.session_state.current_conv_id = create_new_conversation(st.session_state.user_id)
+            else:
+                # Extract ID from "Chat 1 (2025-12-26 12:00)"
+                conv_id = int(selected.split()[1])
+                st.session_state.current_conv_id = conv_id
+        else:
+            st.info("No conversations yet. Start chatting!")
+    
+    # Chat display
+    current_conv_id = st.session_state.current_conv_id
+    messages = get_conversation_messages(current_conv_id)
+    
+    chat_container = st.container()
+    with chat_container:
+        for msg in messages:
+            if msg['sender'] == 'user':
+                st.markdown(f"""
+                <div style='background: linear-gradient(135deg, #8B9DC3, #667eea); 
+                           color: white; padding: 15px; border-radius: 20px 20px 5px 20px; 
+                           margin: 10px 60px 10px 10px; max-width: 70%;'>
+                    <strong>You:</strong> {msg['content']}
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div style='background: #E0E0E0; color: #333; padding: 15px; 
+                           border-radius: 20px 20px 20px 5px; margin: 10px 10px 10px 60px; 
+                           max-width: 70%;'>
+                    <strong>Sage:</strong> {msg['content']}
+                </div>
+                """, unsafe_allow_html=True)
+    
+    # Chat input
+    if prompt := st.chat_input("How are you feeling today?..."):
+        # Save user message
+        save_message(current_conv_id, "user", prompt)
+        
+        # Display user message
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        
+        # AI response
+        with st.chat_message("assistant"):
+            with st.spinner("Sage is thinking..."):
+                # Prepare messages for OpenAI
+                openai_messages = [{"role": "user" if m["sender"] == "user" else "assistant", 
+                                  "content": m["content"]} for m in messages]
+                openai_messages.append({"role": "user", "content": prompt})
+                
+                response = get_ai_response(openai_messages)
+                st.markdown(response)
+                
+                # Save AI response
+                save_message(current_conv_id, "assistant", response)
+        
+        st.rerun()
+    
+    # Logout
+    if st.sidebar.button("🚪 Logout"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
