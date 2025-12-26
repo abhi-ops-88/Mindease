@@ -33,12 +33,11 @@ class Message(Base):
     conversation = relationship("Conversation", back_populates="messages")
 
 def init_db():
-    Base.metadata.create_all(engine)
+    Base.metadata.create_all(engine, checkfirst=True)
 
 def get_session():
     return SessionLocal()
 
-# 🔥 THESE 4 FUNCTIONS WERE MISSING 🔥
 def get_conversation_messages(conv_id):
     session = get_session()
     try:
